@@ -1,17 +1,14 @@
 import makeWASocket, { 
   DisconnectReason, 
   useMultiFileAuthState,
-  makeInMemoryStore,
   Browsers
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import fs from 'fs';
-import path from 'path';
 
 const logger = pino({ level: 'silent' });
-const store = makeInMemoryStore({ logger });
 
 let sock = null;
 let qrCodeData = null;
@@ -35,8 +32,6 @@ export async function connectWhatsApp() {
     browser: Browsers.ubuntu('Chrome'),
     defaultQueryTimeoutMs: undefined,
   });
-
-  store.bind(sock.ev);
 
   // Evento de atualização de conexão
   sock.ev.on('connection.update', async (update) => {
