@@ -21,7 +21,7 @@ router.get('/', (req, res) => {
   const status = getConnectionStatus();
   res.json({
     status: 'online',
-    message: 'Bot de Cobrança WhatsApp - Render',
+    service: 'Sistema de Notificações',
     version: '1.0.0',
     whatsapp: status.connected ? 'conectado' : 'desconectado',
     timestamp: new Date().toISOString()
@@ -58,7 +58,7 @@ router.get('/qr', (req, res) => {
 
   res.json({ 
     message: 'Aguardando geração do QR Code...',
-    hint: 'Se demorar muito, o bot pode estar com problema de conexão. Verifique os logs no Render.',
+    hint: 'Se demorar muito, pode haver problema de conexão. Verifique os logs.',
     troubleshooting: 'Erro 405 geralmente indica problema de rede ou rate limit. Aguarde alguns minutos e tente reiniciar o serviço.'
   });
 });

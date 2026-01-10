@@ -36,10 +36,10 @@ export async function connectWhatsApp() {
     sock = makeWASocket({
       auth: state,
       logger,
-      browser: Browsers.ubuntu('Chrome'),
+      browser: Browsers.windows('Chrome'), // Aparece como Windows Chrome (mais comum)
       defaultQueryTimeoutMs: 60000, // 60 segundos
       syncFullHistory: false,
-      markOnlineOnConnect: true,
+      markOnlineOnConnect: false, // Não aparecer online automaticamente
       connectTimeoutMs: 60000,
       keepAliveIntervalMs: 30000,
     });
@@ -97,7 +97,7 @@ export async function connectWhatsApp() {
         setTimeout(() => connectWhatsApp(), RECONNECT_DELAY);
       } else {
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-          console.log('⚠️ Máximo de tentativas atingido. Bot em standby.');
+          console.log('⚠️ Máximo de tentativas atingido. Serviço em standby.');
           console.log('💡 Acesse /api/qr para tentar novamente ou reinicie o serviço.');
           reconnectAttempts = 0; // Reset para próxima tentativa manual
         } else {

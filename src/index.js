@@ -24,8 +24,8 @@ app.get('/', (req, res) => {
 app.use('/api', routes);
 
 // Inicialização
-async function iniciarBot() {
-  console.log('🚀 Iniciando Bot de Cobrança WhatsApp...\n');
+async function iniciarServico() {
+  console.log('🚀 Iniciando Sistema de Notificações WhatsApp...\n');
 
   try {
     // Iniciar servidor Express PRIMEIRO (para passar no health check do Render)
@@ -66,5 +66,5 @@ process.on('uncaughtException', (error) => {
 });
 
 // Iniciar aplicação
-iniciarBot();
+iniciarServico();
 

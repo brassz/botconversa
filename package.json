@@ -1,7 +1,7 @@
 {
-  "name": "bot-cobranca-whatsapp",
+  "name": "sistema-notificacoes-whatsapp",
   "version": "1.0.0",
-  "description": "Bot de cobrança automática via WhatsApp usando Baileys para Render",
+  "description": "Sistema de notificações automáticas via WhatsApp",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
