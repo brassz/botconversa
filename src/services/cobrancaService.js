@@ -43,14 +43,15 @@ export async function enviarLembretes() {
         );
 
         await sendMessage(cliente.telefone, mensagem);
-        await logMessageSent(cliente, 'lembrete', true);
+        await logMessageSent(cliente, 'lembrete', true, null, mensagem);
         enviados++;
 
         // Delay para evitar bloqueio do WhatsApp
         await sleep(3000);
       } catch (error) {
         console.error(`❌ Erro ao enviar lembrete para ${cliente.nome}:`, error);
-        await logMessageSent(cliente, 'lembrete', false, error.message);
+        const mensagem = MENSAGENS.LEMBRETE(cliente.nome, formatarValor(cliente.valor), formatarData(cliente.data_vencimento));
+        await logMessageSent(cliente, 'lembrete', false, error.message, mensagem);
         falhas++;
       }
     }
@@ -96,13 +97,14 @@ export async function enviarVencimentoHoje() {
         );
 
         await sendMessage(cliente.telefone, mensagem);
-        await logMessageSent(cliente, 'vencimento_hoje', true);
+        await logMessageSent(cliente, 'vencimento_hoje', true, null, mensagem);
         enviados++;
 
         await sleep(3000);
       } catch (error) {
         console.error(`❌ Erro ao enviar para ${cliente.nome}:`, error);
-        await logMessageSent(cliente, 'vencimento_hoje', false, error.message);
+        const mensagem = MENSAGENS.VENCIMENTO_HOJE(cliente.nome, formatarValor(cliente.valor), formatarData(cliente.data_vencimento));
+        await logMessageSent(cliente, 'vencimento_hoje', false, error.message, mensagem);
         falhas++;
       }
     }
@@ -151,13 +153,15 @@ export async function enviarCobrancasAtrasadas() {
         );
 
         await sendMessage(cliente.telefone, mensagem);
-        await logMessageSent(cliente, 'atraso', true);
+        await logMessageSent(cliente, 'atraso', true, null, mensagem);
         enviados++;
 
         await sleep(3000);
       } catch (error) {
         console.error(`❌ Erro ao enviar cobrança para ${cliente.nome}:`, error);
-        await logMessageSent(cliente, 'atraso', false, error.message);
+        const diasAtraso = calcularDiasAtraso(cliente.data_vencimento);
+        const mensagem = MENSAGENS.ATRASO(cliente.nome, formatarValor(cliente.valor), formatarData(cliente.data_vencimento), diasAtraso);
+        await logMessageSent(cliente, 'atraso', false, error.message, mensagem);
         falhas++;
       }
     }

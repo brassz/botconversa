@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Números WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #075E54;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #20bd5a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            display: block;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-detail {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .examples h3 {
+            color: #075E54;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .examples code {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: block;
+            margin: 5px 0;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #128C7E;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>🔍</span>
+            Verificador de Números
+        </h1>
+        <p>Verifique se um número tem WhatsApp antes de enviar mensagens.</p>
+
+        <form id="checkForm">
+            <div class="input-group">
+                <label for="phone">Número de Telefone</label>
+                <input 
+                    type="text" 
+                    id="phone" 
+                    placeholder="(16) 99307-1823 ou 16993071823"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn" id="btnCheck">
+                Verificar Número
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Verificando...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="examples">
+            <h3>📋 Formatos Aceitos:</h3>
+            <code>5516993071823</code>
+            <code>16993071823</code>
+            <code>(16) 99307-1823</code>
+            <code>+55 16 99307-1823</code>
+        </div>
+
+        <div class="back-link">
+            <a href="/">← Voltar ao Painel</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+
+        document.getElementById('checkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value.trim();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const btnCheck = document.getElementById('btnCheck');
+
+            if (!phone) {
+                showResult('error', 'Por favor, digite um número de telefone.');
+                return;
+            }
+
+            // Show loading
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            btnCheck.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/verificar-numero`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    const check = data.result;
+                    
+                    if (check.exists && check.canReceive) {
+                        showResult('success', 
+                            '✅ Número Válido!',
+                            `
+                            <div class="result-detail">📱 <strong>Número:</strong> ${check.phone}</div>
+                            <div class="result-detail">📲 <strong>Formatado:</strong> ${check.formatted}</div>
+                            <div class="result-detail">✅ <strong>Tem WhatsApp:</strong> Sim</div>
+                            <div class="result-detail">✅ <strong>Pode Receber:</strong> Sim</div>
+                            ${check.jid ? `<div class="result-detail">🆔 <strong>JID:</strong> ${check.jid}</div>` : ''}
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #c3e6cb;">
+                                <strong>✅ Este número pode receber mensagens!</strong>
+                            </div>
+                            `
+                        );
+                    } else if (check.exists && !check.canReceive) {
+                        showResult('warning', 
+                            '⚠️ Número com Restrições',
+                            `
+                            <div class="result-detail">📱 <strong>Número:</strong> ${check.phone}</div>
+                            <div class="result-detail">📲 <strong>Formatado:</strong> ${check.formatted}</div>
+                            <div class="result-detail">✅ <strong>Tem WhatsApp:</strong> Sim</div>
+                            <div class="result-detail">⚠️ <strong>Pode Receber:</strong> Não</div>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ffeeba;">
+                                <strong>Possíveis causas:</strong><br>
+                                • Bloqueou mensagens de desconhecidos<br>
+                                • Configurações de privacidade restritivas<br>
+                                • Conta temporariamente suspensa
+                            </div>
+                            `
+                        );
+                    } else {
+                        showResult('error', 
+                            '❌ Número Não Encontrado',
+                            `
+                            <div class="result-detail">📱 <strong>Número:</strong> ${check.phone}</div>
+                            <div class="result-detail">📲 <strong>Formatado:</strong> ${check.formatted}</div>
+                            <div class="result-detail">❌ <strong>Tem WhatsApp:</strong> Não</div>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f5c6cb;">
+                                <strong>Possíveis causas:</strong><br>
+                                • Número não tem WhatsApp instalado<br>
+                                • Número foi desativado<br>
+                                • Número está incorreto<br>
+                                • Número foi banido do WhatsApp
+                            </div>
+                            `
+                        );
+                    }
+                } else {
+                    showResult('error', 
+                        '❌ Erro ao Verificar',
+                        `<div class="result-detail">${data.error || 'Erro desconhecido'}</div>`
+                    );
+                }
+            } catch (error) {
+                showResult('error', 
+                    '❌ Erro de Conexão',
+                    `<div class="result-detail">Não foi possível conectar ao servidor. Verifique se o bot está rodando.</div>`
+                );
+            } finally {
+                loading.style.display = 'none';
+                btnCheck.disabled = false;
+            }
+        });
+
+        function showResult(type, title, content = '') {
+            const result = document.getElementById('result');
+            result.className = `result ${type}`;
+            result.innerHTML = `
+                <div class="result-title">${title}</div>
+                ${content}
+            `;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

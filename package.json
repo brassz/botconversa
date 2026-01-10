@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "postinstall": "npx puppeteer browsers install chrome || echo 'Chrome installation skipped'"
   },
   "keywords": [
     "whatsapp",

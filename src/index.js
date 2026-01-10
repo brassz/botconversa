@@ -1,11 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectWhatsApp } from './bot/whatsapp.js';
 import { iniciarCronJobs } from './cron/scheduler.js';
 import routes from './api/routes.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +20,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rota raiz - redirect para /api
+// Servir arquivos estáticos (painel HTML)
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Rota raiz - redirecionar para o painel
 app.get('/', (req, res) => {
-  res.redirect('/api');
+  res.sendFile(path.join(__dirname, '../public/painel.html'));
 });
 
 // Rotas da API
@@ -32,7 +40,7 @@ async function iniciarServico() {
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(50));
       console.log(`✅ Servidor rodando na porta ${PORT}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🎨 Painel: http://localhost:${PORT}`);
       console.log(`📊 Status: http://localhost:${PORT}/api/status`);
       console.log(`📱 QR Code: http://localhost:${PORT}/api/qr`);
       console.log('='.repeat(50) + '\n');

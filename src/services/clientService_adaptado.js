@@ -94,6 +94,7 @@ export async function getActiveClients() {
 
 /**
  * Busca todos os empréstimos que precisam receber mensagens
+ * Filtra apenas: OVERDUE (atrasados) e DUE_TODAY (vencem hoje)
  */
 export async function getAllClientsForReminder() {
   try {
@@ -111,7 +112,7 @@ export async function getAllClientsForReminder() {
           ${FIELD_MAPPING.clientEmail}
         )
       `)
-      .in(FIELD_MAPPING.loanStatus, [STATUS.OVERDUE, STATUS.DUE_TODAY, STATUS.ACTIVE]);
+      .in(FIELD_MAPPING.loanStatus, [STATUS.OVERDUE, STATUS.DUE_TODAY]);
 
     if (error) throw error;
 

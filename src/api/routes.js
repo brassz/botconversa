@@ -1,12 +1,12 @@
 import express from 'express';
-import { getConnectionStatus, sendMessage } from '../bot/whatsapp.js';
+import { getConnectionStatus, sendMessage, checkPhoneNumber } from '../bot/whatsapp.js';
 import { 
   processarTodasCobrancas,
   enviarLembretes,
   enviarVencimentoHoje,
   enviarCobrancasAtrasadas
 } from '../services/cobrancaService.js';
-import { getMessageHistory } from '../services/logService.js';
+import { getMessageHistory, getMessagesToday } from '../services/logService.js';
 import { 
   getAllClientsForReminder,
   getOverdueClients,
@@ -17,8 +17,8 @@ import {
 const router = express.Router();
 
 // Rota de health check
-router.get('/', (req, res) => {
-  const status = getConnectionStatus();
+router.get('/', async (req, res) => {
+  const status = await getConnectionStatus();
   res.json({
     status: 'online',
     service: 'Sistema de Notificações',
@@ -29,8 +29,8 @@ router.get('/', (req, res) => {
 });
 
 // Status da conexão WhatsApp
-router.get('/status', (req, res) => {
-  const status = getConnectionStatus();
+router.get('/status', async (req, res) => {
+  const status = await getConnectionStatus();
   res.json({
     ...status,
     timestamp: new Date().toISOString()
@@ -39,7 +39,7 @@ router.get('/status', (req, res) => {
 
 // Obter QR Code para conectar (retorna HTML com imagem)
 router.get('/qr', async (req, res) => {
-  const { qr, connected } = getConnectionStatus();
+  const { qr, connected } = await getConnectionStatus();
   
   if (connected) {
     return res.send(`
@@ -272,6 +272,31 @@ router.get('/qr', async (req, res) => {
   `);
 });
 
+// Verificar se número tem WhatsApp
+router.post('/verificar-numero', async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ 
+        error: 'Telefone é obrigatório' 
+      });
+    }
+
+    const result = await checkPhoneNumber(phone);
+    res.json({ 
+      success: true, 
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Enviar mensagem manualmente
 router.post('/send', async (req, res) => {
   try {
@@ -416,6 +441,25 @@ router.get('/historico', async (req, res) => {
     res.json({ 
       count: historico.length,
       historico,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Mensagens enviadas hoje
+router.get('/mensagens-hoje', async (req, res) => {
+  try {
+    const mensagens = await getMessagesToday();
+    
+    res.json({ 
+      count: mensagens.length,
+      mensagens,
+      data: new Date().toLocaleDateString('pt-BR'),
       timestamp: new Date().toISOString()
     });
   } catch (error) {

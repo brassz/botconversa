@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Cobranças - WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #075E54;
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #25D366;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Tabs */
+        .tabs {
+            background: #f0f2f5;
+            padding: 0 30px;
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            top: 2px;
+        }
+
+        .tab:hover {
+            color: #075E54;
+            background: rgba(255,255,255,0.5);
+        }
+
+        .tab.active {
+            color: #075E54;
+            border-bottom-color: #25D366;
+            background: white;
+        }
+
+        /* Filters */
+        .filters {
+            background: #f0f2f5;
+            padding: 20px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .filter-btn.active {
+            background: #25D366;
+            color: white;
+        }
+
+        .filter-btn.overdue { border-left: 4px solid #dc3545; }
+        .filter-btn.due_today { border-left: 4px solid #ffc107; }
+        .filter-btn.active-status { border-left: 4px solid #17a2b8; }
+
+        /* Actions Bar */
+        .actions-bar {
+            padding: 15px 30px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .checkbox-all {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #20bd5a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-secondary {
+            background: #128C7E;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Clients List */
+        .clients-container {
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+        }
+
+        .client-card {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .client-card:hover {
+            background: #f8f9fa;
+        }
+
+        .client-card.selected {
+            background: #e7f5ec;
+        }
+
+        .client-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .client-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .client-info {
+            flex: 1;
+        }
+
+        .client-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .client-phone {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .client-details {
+            text-align: right;
+            margin-right: 20px;
+        }
+
+        .client-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #075E54;
+            margin-bottom: 5px;
+        }
+
+        .client-date {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .status-badge-card {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-overdue {
+            background: #ffe5e5;
+            color: #dc3545;
+        }
+
+        .status-due-today {
+            background: #fff3cd;
+            color: #ff8c00;
+        }
+
+        .status-active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 18px;
+        }
+
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-details {
+            background: #128C7E;
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            background: #075E54;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: none;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Stats */
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #075E54;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Chat Messages */
+        .chat-container {
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            padding: 20px 30px;
+        }
+
+        .message-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .message-card:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+
+        .message-client-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .message-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .message-client-details h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .message-client-details p {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+
+        .message-time {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .message-type-badge {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-lembrete {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .type-vencimento_hoje {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .type-atraso {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .message-body {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .message-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .message-status-sent {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .message-status-failed {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .client-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .client-details {
+                text-align: left;
+                margin-right: 0;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .message-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .message-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span>📱</span>
+                Painel de Cobranças WhatsApp
+            </h1>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="connectionStatus">Conectado</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="clientes">
+                👥 Clientes
+            </button>
+            <button class="tab" data-tab="chat">
+                💬 Chat (0)
+            </button>
+        </div>
+
+        <!-- SEÇÃO: CLIENTES -->
+        <div class="section active" id="section-clientes">
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total de Clientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statOverdue" style="color: #dc3545;">0</div>
+                    <div class="stat-label">Em Atraso</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statDueToday" style="color: #ff8c00;">0</div>
+                    <div class="stat-label">Vencem Hoje</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statActive" style="color: #17a2b8;">0</div>
+                    <div class="stat-label">Ativos</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">
+                📋 Todos
+            </button>
+            <button class="filter-btn overdue" data-filter="overdue">
+                🔴 Em Atraso
+            </button>
+            <button class="filter-btn due_today" data-filter="due_today">
+                🟡 Vencem Hoje
+            </button>
+            <button class="filter-btn active-status" data-filter="active">
+                🔵 Ativos
+            </button>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <div class="bulk-actions">
+                <input type="checkbox" id="selectAll" class="checkbox-all">
+                <label for="selectAll" style="cursor: pointer; user-select: none;">
+                    Selecionar Todos (<span id="selectedCount">0</span>)
+                </label>
+            </div>
+            <div>
+                <button class="btn btn-primary" id="btnSendSelected" disabled>
+                    📤 Enviar para Selecionados
+                </button>
+                <button class="btn btn-secondary" onclick="loadClients()">
+                    🔄 Atualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Clients List -->
+        <div class="clients-container" id="clientsList">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Carregando clientes...</p>
+            </div>
+        </div>
+
+            <!-- Progress -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                </div>
+                <div class="progress-text" id="progressText">Enviando mensagens...</div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO: CHAT -->
+        <div class="section" id="section-chat">
+            <!-- Actions Bar -->
+            <div class="actions-bar">
+                <div>
+                    <h2 style="margin: 0; font-size: 18px; color: #333;">
+                        📅 Mensagens de Hoje - <span id="chatDate">-</span>
+                    </h2>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" onclick="loadChatMessages()">
+                        🔄 Atualizar Chat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Messages Container -->
+            <div class="chat-container" id="chatContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando mensagens...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Details -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Detalhes do Empréstimo</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        let allClients = [];
+        let filteredClients = [];
+        let selectedClients = [];
+        let currentFilter = 'all';
+
+        // Global state
+        let chatMessages = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkConnection();
+            await loadClients();
+            setupEventListeners();
+            setupTabs();
+        });
+
+        // Check WhatsApp connection
+        async function checkConnection() {
+            try {
+                const res = await fetch(`${API_URL}/status`);
+                const data = await res.json();
+                
+                const statusEl = document.getElementById('connectionStatus');
+                if (data.connected) {
+                    statusEl.textContent = 'Conectado';
+                    statusEl.parentElement.querySelector('.status-dot').style.background = '#25D366';
+                } else {
+                    statusEl.textContent = 'Desconectado';
+                    statusEl.parentElement.querySelector('.status-dot').style.background = '#dc3545';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar conexão:', error);
+            }
+        }
+
+        // Load clients
+        async function loadClients() {
+            try {
+                const res = await fetch(`${API_URL}/clientes/all`);
+                const data = await res.json();
+                
+                allClients = data.clientes || [];
+                filterClients(currentFilter);
+                updateStats();
+            } catch (error) {
+                console.error('Erro ao carregar clientes:', error);
+                document.getElementById('clientsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <h3>Erro ao carregar clientes</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Filter clients
+        function filterClients(filter) {
+            currentFilter = filter;
+            
+            if (filter === 'all') {
+                filteredClients = allClients;
+            } else {
+                filteredClients = allClients.filter(c => c.status === filter);
+            }
+            
+            renderClients();
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+        }
+
+        // Render clients
+        function renderClients() {
+            const container = document.getElementById('clientsList');
+            
+            if (filteredClients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>Nenhum cliente encontrado</h3>
+                        <p>Não há clientes para o filtro selecionado.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredClients.map(client => `
+                <div class="client-card ${selectedClients.includes(client.loan_id) ? 'selected' : ''}" data-id="${client.loan_id}">
+                    <input type="checkbox" class="client-checkbox" data-id="${client.loan_id}" 
+                           ${selectedClients.includes(client.loan_id) ? 'checked' : ''}>
+                    
+                    <div class="client-avatar">
+                        ${(client.nome || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    
+                    <div class="client-info">
+                        <div class="client-name">${client.nome || 'Nome não disponível'}</div>
+                        <div class="client-phone">📱 ${formatPhone(client.telefone)}</div>
+                    </div>
+                    
+                    <div class="client-details">
+                        <div class="client-value">R$ ${formatMoney(client.valor)}</div>
+                        <div class="client-date">Vence: ${formatDate(client.data_vencimento)}</div>
+                    </div>
+                    
+                    <div class="status-badge-card ${getStatusClass(client.status)}">
+                        ${getStatusText(client.status)}
+                    </div>
+                    
+                    <div class="client-actions">
+                        <button class="btn-icon btn-details" onclick="showDetails('${client.loan_id}')" title="Ver Detalhes">
+                            ℹ️
+                        </button>
+                        <button class="btn-icon btn-whatsapp" onclick="sendSingle('${client.loan_id}')" title="Enviar Mensagem">
+                            💬
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Re-attach checkbox listeners
+            attachCheckboxListeners();
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('statTotal').textContent = allClients.length;
+            document.getElementById('statOverdue').textContent = allClients.filter(c => c.status === 'overdue').length;
+            document.getElementById('statDueToday').textContent = allClients.filter(c => c.status === 'due_today').length;
+            document.getElementById('statActive').textContent = allClients.filter(c => c.status === 'active').length;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterClients(btn.dataset.filter);
+                });
+            });
+
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    selectedClients = filteredClients.map(c => c.loan_id);
+                } else {
+                    selectedClients = [];
+                }
+                renderClients();
+                updateSelectedCount();
+            });
+
+            // Send selected button
+            document.getElementById('btnSendSelected').addEventListener('click', sendToSelected);
+        }
+
+        // Attach checkbox listeners
+        function attachCheckboxListeners() {
+            document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const id = e.target.dataset.id;
+                    
+                    if (e.target.checked) {
+                        if (!selectedClients.includes(id)) {
+                            selectedClients.push(id);
+                        }
+                    } else {
+                        selectedClients = selectedClients.filter(cid => cid !== id);
+                    }
+                    
+                    updateSelectedCount();
+                    e.target.closest('.client-card').classList.toggle('selected', e.target.checked);
+                });
+            });
+        }
+
+        // Update selected count
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedClients.length;
+            document.getElementById('btnSendSelected').disabled = selectedClients.length === 0;
+            
+            const selectAllCheckbox = document.getElementById('selectAll');
+            selectAllCheckbox.checked = selectedClients.length === filteredClients.length && filteredClients.length > 0;
+        }
+
+        // Show details modal
+        async function showDetails(loanId) {
+            const client = allClients.find(c => c.loan_id === loanId);
+            if (!client) return;
+
+            const modal = document.getElementById('detailsModal');
+            const modalBody = document.getElementById('modalBody');
+
+            const diasAtraso = client.status === 'overdue' ? calcularDiasAtraso(client.data_vencimento) : 0;
+
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Nome:</span>
+                    <span class="detail-value">${client.nome || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Telefone:</span>
+                    <span class="detail-value">${formatPhone(client.telefone)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${client.email || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Valor do Empréstimo:</span>
+                    <span class="detail-value" style="color: #075E54; font-size: 18px; font-weight: bold;">
+                        R$ ${formatMoney(client.valor)}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Data de Vencimento:</span>
+                    <span class="detail-value">${formatDate(client.data_vencimento)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="status-badge-card ${getStatusClass(client.status)}">
+                        ${getStatusText(client.status)}
+                    </span>
+                </div>
+                ${diasAtraso > 0 ? `
+                    <div class="detail-row">
+                        <span class="detail-label">Dias em Atraso:</span>
+                        <span class="detail-value" style="color: #dc3545; font-weight: bold;">
+                            ${diasAtraso} dia(s)
+                        </span>
+                    </div>
+                ` : ''}
+                <div class="detail-row">
+                    <span class="detail-label">ID do Empréstimo:</span>
+                    <span class="detail-value">#${client.loan_id}</span>
+                </div>
+                <div style="margin-top: 30px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="sendSingle('${client.loan_id}'); closeModal();" style="flex: 1;">
+                        💬 Enviar Mensagem
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal()" style="flex: 1;">
+                        ❌ Fechar
+                    </button>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        // Format phone number (ensure it has country code)
+        function formatPhoneForWhatsApp(phone) {
+            if (!phone) return null;
+            
+            // Remove all non-numeric characters
+            let cleaned = phone.replace(/\D/g, '');
+            
+            // If already has country code 55, use as is
+            if (cleaned.startsWith('55')) {
+                return cleaned;
+            }
+            
+            // If has 10 or 11 digits (Brazilian format), add 55
+            if (cleaned.length === 10 || cleaned.length === 11) {
+                return '55' + cleaned;
+            }
+            
+            // Otherwise, try adding 55
+            return '55' + cleaned;
+        }
+
+        // Send to single client
+        async function sendSingle(loanId) {
+            const client = allClients.find(c => c.loan_id === loanId);
+            if (!client) return;
+
+            if (!confirm(`Enviar mensagem para ${client.nome}?\n📱 ${formatPhone(client.telefone)}`)) return;
+
+            try {
+                const message = generateMessage(client);
+                const formattedPhone = formatPhoneForWhatsApp(client.telefone);
+                
+                if (!formattedPhone) {
+                    throw new Error('Telefone inválido');
+                }
+                
+                const res = await fetch(`${API_URL}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: formattedPhone,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert(`✅ Mensagem enviada para ${client.nome}!`);
+                } else {
+                    throw new Error(data.error || 'Erro ao enviar mensagem');
+                }
+            } catch (error) {
+                alert(`❌ Erro ao enviar mensagem: ${error.message}\n\n💡 Verifique se o número tem WhatsApp: ${formatPhone(client.telefone)}`);
+            }
+        }
+
+        // Send to selected clients
+        async function sendToSelected() {
+            if (selectedClients.length === 0) return;
+
+            if (!confirm(`Enviar mensagens para ${selectedClients.length} cliente(s)?\n\n⏱️ Tempo estimado: ${Math.ceil(selectedClients.length * 15 / 60)} minutos`)) {
+                return;
+            }
+
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressContainer.classList.add('active');
+            document.getElementById('btnSendSelected').disabled = true;
+
+            let sent = 0;
+            let failed = 0;
+
+            for (let i = 0; i < selectedClients.length; i++) {
+                const loanId = selectedClients[i];
+                const client = allClients.find(c => c.loan_id === loanId);
+                
+                if (!client) {
+                    failed++;
+                    continue;
+                }
+
+                try {
+                    const message = generateMessage(client);
+                    const formattedPhone = formatPhoneForWhatsApp(client.telefone);
+                    
+                    if (!formattedPhone) {
+                        console.error(`Telefone inválido para ${client.nome}: ${client.telefone}`);
+                        failed++;
+                        continue;
+                    }
+                    
+                    const res = await fetch(`${API_URL}/send`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone: formattedPhone,
+                            message: message
+                        })
+                    });
+
+                    if (res.ok) {
+                        sent++;
+                        console.log(`✅ Enviado para ${client.nome}`);
+                    } else {
+                        const data = await res.json();
+                        console.error(`❌ Falha para ${client.nome}: ${data.error || 'Erro desconhecido'}`);
+                        failed++;
+                    }
+                } catch (error) {
+                    console.error(`❌ Erro ao enviar para ${client.nome}:`, error);
+                    failed++;
+                }
+
+                // Update progress
+                const progress = Math.round(((i + 1) / selectedClients.length) * 100);
+                progressFill.style.width = `${progress}%`;
+                progressFill.textContent = `${progress}%`;
+                progressText.textContent = `Enviado: ${sent} | Falhas: ${failed} | Restantes: ${selectedClients.length - i - 1}`;
+
+                // Delay between messages (15 seconds)
+                if (i < selectedClients.length - 1) {
+                    await sleep(15000);
+                }
+            }
+
+            // Complete
+            progressText.textContent = `✅ Concluído! Enviados: ${sent} | Falhas: ${failed}`;
+            
+            setTimeout(() => {
+                progressContainer.classList.remove('active');
+                document.getElementById('btnSendSelected').disabled = false;
+                selectedClients = [];
+                renderClients();
+                updateSelectedCount();
+                
+                alert(`✅ Envio concluído!\n\n📤 Enviados: ${sent}\n❌ Falhas: ${failed}`);
+            }, 3000);
+        }
+
+        // Generate message based on status
+        function generateMessage(client) {
+            const nome = client.nome || 'Cliente';
+            const valor = formatMoney(client.valor);
+            const data = formatDate(client.data_vencimento);
+
+            switch (client.status) {
+                case 'overdue':
+                    const dias = calcularDiasAtraso(client.data_vencimento);
+                    return `Olá ${nome}! ⚠️\n\nSeu pagamento de R$ ${valor} está em atraso há ${dias} dia(s).\n\nVencimento: ${data}\n\nPor favor, regularize sua situação o quanto antes para evitar juros adicionais.`;
+                
+                case 'due_today':
+                    return `Olá ${nome}! ⏰\n\nSeu pagamento de R$ ${valor} vence HOJE (${data}).\n\nRealize o pagamento para evitar multas e juros!`;
+                
+                case 'active':
+                    return `Olá ${nome}! 😊\n\nLembramos que seu pagamento de R$ ${valor} vence amanhã (${data}).\n\nConte conosco para qualquer dúvida!`;
+                
+                default:
+                    return `Olá ${nome}! Lembramos do seu pagamento de R$ ${valor}.`;
+            }
+        }
+
+        // Utility functions
+        function formatMoney(value) {
+            return parseFloat(value).toFixed(2).replace('.', ',');
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('pt-BR');
+        }
+
+        function formatPhone(phone) {
+            if (!phone) return 'N/A';
+            const cleaned = phone.replace(/\D/g, '');
+            if (cleaned.length === 11) {
+                return `(${cleaned.substr(0,2)}) ${cleaned.substr(2,5)}-${cleaned.substr(7)}`;
+            }
+            return phone;
+        }
+
+        function calcularDiasAtraso(dateString) {
+            const hoje = new Date();
+            const vencimento = new Date(dateString);
+            const diff = hoje - vencimento;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'overdue': return 'status-overdue';
+                case 'due_today': return 'status-due-today';
+                case 'active': return 'status-active';
+                default: return '';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'overdue': return '🔴 Em Atraso';
+                case 'due_today': return '🟡 Vence Hoje';
+                case 'active': return '🔵 Ativo';
+                default: return status;
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Close modal on outside click
+        document.getElementById('detailsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailsModal') {
+                closeModal();
+            }
+        });
+
+        // Auto-refresh connection status every 30 seconds
+        setInterval(checkConnection, 30000);
+
+        // ==================== TAB MANAGEMENT ====================
+
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+
+            // Update sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.toggle('active', section.id === `section-${tabName}`);
+            });
+
+            // Load data if needed
+            if (tabName === 'chat') {
+                loadChatMessages();
+            }
+        }
+
+        // ==================== CHAT FUNCTIONS ====================
+
+        async function loadChatMessages() {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            try {
+                chatContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Carregando mensagens...</p>
+                    </div>
+                `;
+
+                const res = await fetch(`${API_URL}/mensagens-hoje`);
+                const data = await res.json();
+                
+                chatMessages = data.mensagens || [];
+                
+                // Update chat date
+                document.getElementById('chatDate').textContent = data.data || new Date().toLocaleDateString('pt-BR');
+                
+                // Update tab counter
+                document.querySelector('[data-tab="chat"]').innerHTML = `💬 Chat (${chatMessages.length})`;
+                
+                renderChatMessages();
+            } catch (error) {
+                console.error('Erro ao carregar mensagens:', error);
+                chatContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <h3>Erro ao carregar mensagens</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderChatMessages() {
+            const chatContainer = document.getElementById('chatContainer');
+            
+            if (chatMessages.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>Nenhuma mensagem enviada hoje</h3>
+                        <p>As mensagens enviadas hoje aparecerão aqui.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatContainer.innerHTML = chatMessages.map(msg => `
+                <div class="message-card">
+                    <div class="message-header">
+                        <div class="message-client-info">
+                            <div class="message-avatar">
+                                ${(msg.client_name || 'C').charAt(0).toUpperCase()}
+                            </div>
+                            <div class="message-client-details">
+                                <h3>${msg.client_name || 'Cliente'}</h3>
+                                <p>📱 ${formatPhone(msg.phone)}</p>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="message-type-badge type-${msg.message_type}">
+                                ${getMessageTypeText(msg.message_type)}
+                            </div>
+                            <div class="message-time">
+                                ⏰ ${formatDateTime(msg.sent_at)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-body">
+                        ${msg.message_content || '[Conteúdo não disponível]'}
+                    </div>
+                    
+                    <div class="message-footer">
+                        <div class="message-status-${msg.status}">
+                            ${msg.status === 'sent' ? '✅ Enviada' : '❌ Falha'}
+                        </div>
+                        ${msg.error_message ? `<div style="color: #dc3545; font-size: 12px;">Erro: ${msg.error_message}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getMessageTypeText(type) {
+            switch (type) {
+                case 'lembrete': return '📅 Lembrete';
+                case 'vencimento_hoje': return '⏰ Vence Hoje';
+                case 'atraso': return '🔴 Atraso';
+                default: return type;
+            }
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>
+
