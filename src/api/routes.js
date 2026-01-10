@@ -18,10 +18,12 @@ const router = express.Router();
 
 // Rota de health check
 router.get('/', (req, res) => {
+  const status = getConnectionStatus();
   res.json({
     status: 'online',
     message: 'Bot de Cobrança WhatsApp - Render',
     version: '1.0.0',
+    whatsapp: status.connected ? 'conectado' : 'desconectado',
     timestamp: new Date().toISOString()
   });
 });

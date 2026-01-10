@@ -27,10 +27,11 @@ export async function connectWhatsApp() {
 
   sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true,
     logger,
     browser: Browsers.ubuntu('Chrome'),
     defaultQueryTimeoutMs: undefined,
+    syncFullHistory: false,
+    markOnlineOnConnect: true,
   });
 
   // Evento de atualização de conexão
@@ -39,25 +40,29 @@ export async function connectWhatsApp() {
 
     if (qr) {
       qrCodeData = qr;
-      console.log('📱 QR Code gerado! Escaneie com seu WhatsApp:');
-      qrcode.generate(qr, { small: true });
+      console.log('📱 QR Code gerado! Acesse /api/qr para escanear');
     }
 
     if (connection === 'close') {
       isConnected = false;
-      const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-        ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
-        : true;
+      const statusCode = lastDisconnect?.error instanceof Boom 
+        ? lastDisconnect.error.output.statusCode 
+        : 500;
+      
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-      console.log('❌ Conexão fechada. Reconectando:', shouldReconnect);
+      console.log(`❌ Conexão fechada (código: ${statusCode})`);
 
       if (shouldReconnect) {
-        setTimeout(() => connectWhatsApp(), 3000);
+        console.log('🔄 Tentando reconectar em 5 segundos...');
+        setTimeout(() => connectWhatsApp(), 5000);
+      } else {
+        console.log('⚠️ Você foi deslogado. Acesse /api/qr para gerar novo QR Code');
       }
     } else if (connection === 'open') {
       isConnected = true;
       qrCodeData = null;
-      console.log('✅ Conectado ao WhatsApp!');
+      console.log('✅ Conectado ao WhatsApp com sucesso!');
     }
   });
 

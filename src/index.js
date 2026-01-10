@@ -15,7 +15,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas
+// Rota raiz - redirect para /api
+app.get('/', (req, res) => {
+  res.redirect('/api');
+});
+
+// Rotas da API
 app.use('/api', routes);
 
 // Inicialização
