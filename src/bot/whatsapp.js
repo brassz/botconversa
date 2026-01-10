@@ -33,6 +33,12 @@ export async function connectWhatsApp() {
 
     console.log('🔌 Estabelecendo conexão com WhatsApp...');
 
+    // Configuração de fetch customizada para melhor conectividade
+    const fetchOptions = {
+      timeout: 60000,
+      agent: undefined // Usar agent padrão do sistema
+    };
+
     sock = makeWASocket({
       auth: state,
       logger,
@@ -42,6 +48,10 @@ export async function connectWhatsApp() {
       markOnlineOnConnect: false, // Não aparecer online automaticamente
       connectTimeoutMs: 60000,
       keepAliveIntervalMs: 30000,
+      retryRequestDelayMs: 1000,
+      maxMsgRetryCount: 5,
+      emitOwnEvents: false,
+      getMessage: async () => undefined, // Não buscar mensagens antigas
     });
 
   // Evento de atualização de conexão
