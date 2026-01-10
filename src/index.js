@@ -23,15 +23,7 @@ async function iniciarBot() {
   console.log('🚀 Iniciando Bot de Cobrança WhatsApp...\n');
 
   try {
-    // Conectar ao WhatsApp
-    console.log('📱 Conectando ao WhatsApp...');
-    await connectWhatsApp();
-
-    // Iniciar cron jobs
-    console.log('\n⏲️ Configurando agendamentos...');
-    iniciarCronJobs();
-
-    // Iniciar servidor Express
+    // Iniciar servidor Express PRIMEIRO (para passar no health check do Render)
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(50));
       console.log(`✅ Servidor rodando na porta ${PORT}`);
@@ -41,8 +33,20 @@ async function iniciarBot() {
       console.log('='.repeat(50) + '\n');
     });
 
+    // Conectar ao WhatsApp de forma assíncrona (não bloqueia)
+    console.log('📱 Conectando ao WhatsApp em background...');
+    connectWhatsApp().catch(error => {
+      console.error('❌ Erro na conexão WhatsApp:', error);
+      console.log('ℹ️ O servidor continua rodando. Acesse /api/qr para conectar.');
+    });
+
+    // Iniciar cron jobs
+    console.log('⏲️ Configurando agendamentos...');
+    iniciarCronJobs();
+    console.log('✅ Agendamentos configurados!\n');
+
   } catch (error) {
-    console.error('❌ Erro ao iniciar bot:', error);
+    console.error('❌ Erro ao iniciar servidor:', error);
     process.exit(1);
   }
 }
