@@ -14,25 +14,35 @@ let sock = null;
 let qrCodeData = null;
 let isConnected = false;
 
+// Variáveis de controle de reconexão
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY = 10000; // 10 segundos
+
 // Função para conectar ao WhatsApp
 export async function connectWhatsApp() {
   const authFolder = './auth_info';
   
-  // Criar pasta de autenticação se não existir
-  if (!fs.existsSync(authFolder)) {
-    fs.mkdirSync(authFolder, { recursive: true });
-  }
+  try {
+    // Criar pasta de autenticação se não existir
+    if (!fs.existsSync(authFolder)) {
+      fs.mkdirSync(authFolder, { recursive: true });
+    }
 
-  const { state, saveCreds } = await useMultiFileAuthState(authFolder);
+    const { state, saveCreds } = await useMultiFileAuthState(authFolder);
 
-  sock = makeWASocket({
-    auth: state,
-    logger,
-    browser: Browsers.ubuntu('Chrome'),
-    defaultQueryTimeoutMs: undefined,
-    syncFullHistory: false,
-    markOnlineOnConnect: true,
-  });
+    console.log('🔌 Estabelecendo conexão com WhatsApp...');
+
+    sock = makeWASocket({
+      auth: state,
+      logger,
+      browser: Browsers.ubuntu('Chrome'),
+      defaultQueryTimeoutMs: 60000, // 60 segundos
+      syncFullHistory: false,
+      markOnlineOnConnect: true,
+      connectTimeoutMs: 60000,
+      keepAliveIntervalMs: 30000,
+    });
 
   // Evento de atualização de conexão
   sock.ev.on('connection.update', async (update) => {
@@ -40,7 +50,13 @@ export async function connectWhatsApp() {
 
     if (qr) {
       qrCodeData = qr;
+      reconnectAttempts = 0; // Reset ao gerar QR
       console.log('📱 QR Code gerado! Acesse /api/qr para escanear');
+      console.log('📋 Tamanho do QR:', qr.length);
+    }
+
+    if (connection === 'connecting') {
+      console.log('🔄 Conectando ao WhatsApp...');
     }
 
     if (connection === 'close') {
@@ -49,19 +65,49 @@ export async function connectWhatsApp() {
         ? lastDisconnect.error.output.statusCode 
         : 500;
       
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const errorMessage = lastDisconnect?.error?.message || 'Erro desconhecido';
+      
+      console.log(`❌ Conexão fechada (código: ${statusCode}, mensagem: ${errorMessage})`);
 
-      console.log(`❌ Conexão fechada (código: ${statusCode})`);
+      // Códigos que NÃO devem reconectar
+      const noReconnectCodes = [
+        DisconnectReason.loggedOut,
+        DisconnectReason.badSession,
+      ];
+
+      const shouldReconnect = !noReconnectCodes.includes(statusCode) 
+        && reconnectAttempts < MAX_RECONNECT_ATTEMPTS;
 
       if (shouldReconnect) {
-        console.log('🔄 Tentando reconectar em 5 segundos...');
-        setTimeout(() => connectWhatsApp(), 5000);
+        reconnectAttempts++;
+        console.log(`🔄 Tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} - Reconectando em ${RECONNECT_DELAY/1000}s...`);
+        
+        // Limpar sessão se erro 405 (pode estar corrompida)
+        if (statusCode === 405 && reconnectAttempts >= 3) {
+          console.log('🗑️ Limpando sessão corrompida...');
+          try {
+            if (fs.existsSync(authFolder)) {
+              fs.rmSync(authFolder, { recursive: true, force: true });
+            }
+          } catch (e) {
+            console.error('❌ Erro ao limpar sessão:', e.message);
+          }
+        }
+        
+        setTimeout(() => connectWhatsApp(), RECONNECT_DELAY);
       } else {
-        console.log('⚠️ Você foi deslogado. Acesse /api/qr para gerar novo QR Code');
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          console.log('⚠️ Máximo de tentativas atingido. Bot em standby.');
+          console.log('💡 Acesse /api/qr para tentar novamente ou reinicie o serviço.');
+          reconnectAttempts = 0; // Reset para próxima tentativa manual
+        } else {
+          console.log('⚠️ Você foi deslogado. Acesse /api/qr para gerar novo QR Code');
+        }
       }
     } else if (connection === 'open') {
       isConnected = true;
       qrCodeData = null;
+      reconnectAttempts = 0; // Reset ao conectar
       console.log('✅ Conectado ao WhatsApp com sucesso!');
     }
   });
@@ -70,6 +116,20 @@ export async function connectWhatsApp() {
   sock.ev.on('creds.update', saveCreds);
 
   return sock;
+  
+  } catch (error) {
+    console.error('❌ Erro fatal ao conectar WhatsApp:', error.message);
+    console.log('🔄 Tentando novamente em 15 segundos...');
+    
+    setTimeout(() => {
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        connectWhatsApp();
+      }
+    }, 15000);
+    
+    throw error;
+  }
 }
 
 // Função para enviar mensagem

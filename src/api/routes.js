@@ -51,12 +51,15 @@ router.get('/qr', (req, res) => {
   if (qr) {
     return res.json({ 
       qr,
-      message: 'Escaneie o QR Code com seu WhatsApp' 
+      message: 'Escaneie o QR Code com seu WhatsApp',
+      instructions: 'Copie o código acima e use um gerador de QR Code online como: https://qr-code-styling.com/'
     });
   }
 
   res.json({ 
-    message: 'Aguardando geração do QR Code...' 
+    message: 'Aguardando geração do QR Code...',
+    hint: 'Se demorar muito, o bot pode estar com problema de conexão. Verifique os logs no Render.',
+    troubleshooting: 'Erro 405 geralmente indica problema de rede ou rate limit. Aguarde alguns minutos e tente reiniciar o serviço.'
   });
 });
 
