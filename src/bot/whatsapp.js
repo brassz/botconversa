@@ -58,10 +58,15 @@ export async function connectWhatsApp() {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-extensions'
       ],
-      autoClose: 60000, // Fechar após 60s de inatividade
+      autoClose: 0, // Não fechar automaticamente
       disableWelcome: true, // Não mostrar mensagem de boas-vindas
+      puppeteerOptions: {
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      }
     });
 
     console.log('✅ Cliente Wppconnect inicializado!');

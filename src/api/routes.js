@@ -12,7 +12,7 @@ import {
   getOverdueClients,
   getDueTodayClients,
   getActiveClients
-} from '../services/clientService.js';
+} from '../services/clientService_adaptado.js';
 
 const router = express.Router();
 
@@ -86,20 +86,11 @@ router.get('/qr', async (req, res) => {
   }
 
   if (qr) {
-    // Gerar imagem do QR Code
-    const QRCode = await import('qrcode');
-    
-    try {
-      // Gerar QR Code como Data URL (base64)
-      const qrImage = await QRCode.toDataURL(qr, {
-        width: 400,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
+    // O Wppconnect já retorna uma imagem base64 pronta!
+    // Não precisa converter novamente
+    const qrImage = qr.startsWith('data:') ? qr : `data:image/png;base64,${qr}`;
 
+    try {
       // Retornar HTML com QR Code embutido
       return res.send(`
         <!DOCTYPE html>

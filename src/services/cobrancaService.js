@@ -7,8 +7,8 @@ import {
   calcularDiasAtraso,
   formatarData,
   formatarValor 
-} from './clientService.js';
-import { logMessageSent, wasMessageSentToday } from './logService.js';
+} from './clientService_adaptado.js';
+import { logMessageSent, wasMessageSentToday } from './logService_adaptado.js';
 
 /**
  * Envia lembretes para clientes que vencem amanhã
